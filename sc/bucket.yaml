@@ -1,7 +1,7 @@
 apiVersion: storage.gcp.upbound.io/v1beta1
 kind: Bucket
 metadata:
-  name: vth43512
+  name: vth43t
   namespace: crossplane-system
   labels:
     docs.crossplane.io/example: provider-gcp
