@@ -1,4 +1,4 @@
-name: UPSERT workflow
+name: IaC
 on:
   workflow_dispatch:
     inputs:
@@ -8,35 +8,24 @@ on:
           general context (blueprint, run id, etc...)
         type: string
 jobs:
-  create-entity-in-port-and-update-run:
+  deploy-app:
     runs-on: ubuntu-latest
     steps:
-      - name: UPSERT Entity
-        uses: port-labs/port-github-action@v1
+      - uses: actions/checkout@v3
         with:
-          identifier: some_identifier
-          title: Some Title
-          team: "[]"
-          icon: DefaultBlueprint
-          blueprint: argocdRepo
-          properties: |-
-            {
-              "repoUrl": "https://example.com",
-              "repoType": "string"
-            }
-          relations: |-
-            {
-              "Namespace": "related_entity_identifier"
-            }
-          clientId: ${{ secrets.PORT_CLIENT_ID }}
-          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
-          operation: UPSERT
-          runId: ${{fromJson(inputs.port_payload).context.runId}}
-      - name: Create a log message
-        uses: port-labs/port-github-action@v1
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Create cluster
+        run: |
+          touch test.sh
+      - name: Commit changes
+        run: |
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add .
+          git commit -m "Create cluster test"
+      - name: Push changes
+        uses: ad-m/github-push-action@master
         with:
-          clientId: ${{ secrets.PORT_CLIENT_ID }}
-          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
-          operation: PATCH_RUN
-          runId: ${{fromJson(inputs.port_payload).context.runId}}
-          logMessage: An example of a log message
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
