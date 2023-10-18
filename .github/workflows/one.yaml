@@ -1,45 +1,42 @@
-name: Create a cluster
+name: UPSERT workflow
 on:
   workflow_dispatch:
     inputs:
-      name:
-        required: false
-        description: "The name of the cluster"
-      provider:
-        required: false
-        description: "The provider where the cluster is hosted"
-        default: "civo"
-      cluster:
-        required: false
-        description: "The type of the cluster"
-        default: "ck-all"
-      node-size:
-        required: false
-        description: "The size of the nodes"
-        default: "small"
-      min-node-count:
-        required: false
-        description: "The minnimun number of nodes (autoscaler might increase this number)"
-        default: "1"
+      port_payload:
+        required: true
+        description: Port's payload, including details for who triggered the action and
+          general context (blueprint, run id, etc...)
+        type: string
 jobs:
-  deploy-app:
+  create-entity-in-port-and-update-run:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: UPSERT Entity
+        uses: port-labs/port-github-action@v1
         with:
-          persist-credentials: false
-          fetch-depth: 0
-      - name: Create cluster
-        run: |
-          touch test.sh
-      - name: Commit changes
-        run: |
-          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add .
-          git commit -m "Create cluster test"
-      - name: Push changes
-        uses: ad-m/github-push-action@master
+          identifier: some_identifier
+          title: Some Title
+          team: "[]"
+          icon: DefaultBlueprint
+          blueprint: argocdRepo
+          properties: |-
+            {
+              "repoUrl": "https://example.com",
+              "repoType": "string"
+            }
+          relations: |-
+            {
+              "Namespace": "related_entity_identifier"
+            }
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          operation: UPSERT
+          runId: ${{fromJson(inputs.port_payload).context.runId}}
+      - name: Create a log message
+        uses: port-labs/port-github-action@v1
         with:
-          github_token: ${{ secrets.GH_TOKEN }}
-          branch: ${{ github.ref }}
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          operation: PATCH_RUN
+          runId: ${{fromJson(inputs.port_payload).context.runId}}
+          logMessage: An example of a log message
